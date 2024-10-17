@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/bank/bank.iml" filepath="$PROJECT_DIR$/bank/bank.iml" />
+      <module fileurl="file://$PROJECT_DIR$/bank-mvc-02/bank-mvc-02.iml" filepath="$PROJECT_DIR$/bank-mvc-02/bank-mvc-02.iml" />
+      <module fileurl="file://$PROJECT_DIR$/bank_mvc_03/bank_mvc_03.iml" filepath="$PROJECT_DIR$/bank_mvc_03/bank_mvc_03.iml" />
+      <module fileurl="file://$PROJECT_DIR$/bank_mvc_04/bank_mvc_04.iml" filepath="$PROJECT_DIR$/bank_mvc_04/bank_mvc_04.iml" />
+      <module fileurl="file://$PROJECT_DIR$/bank_mvc_05/bank_mvc_05.iml" filepath="$PROJECT_DIR$/bank_mvc_05/bank_mvc_05.iml" />
+      <module fileurl="file://$PROJECT_DIR$/bank_mvc_last/bank_mvc_last.iml" filepath="$PROJECT_DIR$/bank_mvc_last/bank_mvc_last.iml" />
+      <module fileurl="file://$PROJECT_DIR$/homework.iml" filepath="$PROJECT_DIR$/homework.iml" />
+      <module fileurl="file://$PROJECT_DIR$/threadlocal/threadlocal.iml" filepath="$PROJECT_DIR$/threadlocal/threadlocal.iml" />
+    </modules>
+  </component>
+</project>

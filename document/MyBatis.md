@@ -102,21 +102,35 @@ while(rs.next()){
 ## 1.4 了解MyBatis
 
 - MyBatis本质上就是对JDBC的封装，通过MyBatis完成CRUD。
+
 - MyBatis在三层架构中负责持久层的，属于持久层框架。
+
 - MyBatis的发展历程：【引用百度百科】
    - MyBatis本是apache的一个开源项目iBatis，2010年这个项目由apache software foundation迁移到了google code，并且改名为MyBatis。2013年11月迁移到Github。
    - iBATIS一词来源于“internet”和“abatis”的组合，是一个基于Java的持久层框架。iBATIS提供的持久层框架包括SQL Maps和Data Access Objects（DAOs）。
+   
 - 打开mybatis代码可以看到它的包结构中包含：ibatis
-   - ![42857443-5184-45b5-8AD4-2B281C88A8CC.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1659580495482-02167fb7-a183-4337-bfbe-f9ab50e736d6.png#averageHue=%23e8c273&clientId=u6b7aa99c-2be4-4&from=paste&height=146&id=u383be560&originHeight=146&originWidth=427&originalType=binary&ratio=1&rotation=0&showTitle=false&size=5675&status=done&style=none&taskId=uc32d6afd-346b-4151-8933-728a4a66a30&title=&width=427)
+   
+   ![image-20241017173134577](C:\Users\PC\AppData\Roaming\Typora\typora-user-images\image-20241017173134577.png)
+   
 - ORM：对象关系映射
    - O（Object）：Java虚拟机中的Java对象
+   
    - R（Relational）：关系型数据库
+   
    - M（Mapping）：将Java虚拟机中的Java对象映射到数据库表中一行记录，或是将数据库表中一行记录映射成Java虚拟机中的一个Java对象。
+   
    - ORM图示
+      
+      ![image-20241017175034446](C:\Users\PC\AppData\Roaming\Typora\typora-user-images\image-20241017175034446.png)
+      
       - ![C48A1A89-244D-40f4-85DB-F1E665A2EA62.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1659580953095-86e388ac-13b5-4448-b90a-2aacd36688ef.png#averageHue=%23d7d9d2&clientId=u6b7aa99c-2be4-4&from=paste&height=200&id=uebaeb73c&originHeight=200&originWidth=579&originalType=binary&ratio=1&rotation=0&showTitle=false&size=98143&status=done&style=none&taskId=ua834ac11-2f7e-406c-9c58-d7665141cb3&title=&width=579)
       - ![A21555BB-55B7-4d7c-8AB0-F49B10E96BD3.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1659580965550-87c43dee-f1c4-4bdd-b15e-14f831b3d0da.png#averageHue=%23efa67e&clientId=u6b7aa99c-2be4-4&from=paste&height=333&id=u6c63cd39&originHeight=333&originWidth=465&originalType=binary&ratio=1&rotation=0&showTitle=false&size=92293&status=done&style=none&taskId=u65b49126-aa66-4916-8c8f-7799b39c26c&title=&width=465)
+      
    - MyBatis属于半自动化ORM框架。
+   
    - Hibernate属于全自动化的ORM框架。
+   
 - MyBatis框架特点：
    - 支持定制化 SQL、存储过程、基本映射以及高级映射
    - 避免了几乎所有的 JDBC 代码中手动设置参数以及获取结果集
@@ -219,12 +233,14 @@ while(rs.next()){
     </environments>
     <mappers>
         <!--sql映射文件创建好之后，需要将该文件路径配置到这里-->
+        <!--自动会从类的根路径下开始查找文件-->
         <mapper resource=""/>
     </mappers>
 </configuration>
 ```
 注意1：mybatis核心配置文件的文件名不一定是mybatis-config.xml，可以是其它名字。
 注意2：mybatis核心配置文件存放的位置也可以随意。这里选择放在resources根下，相当于放到了类的根路径下。
+注意3：**这是核心配置文件，主要配置连接数据库的信息等。**
 
 - 步骤4：在resources根目录下新建CarMapper.xml配置文件（可以参考mybatis手册拷贝）
 ```xml
@@ -247,9 +263,12 @@ while(rs.next()){
 注意2：CarMapper.xml文件的名字不是固定的。可以使用其它名字。
 注意3：CarMapper.xml文件的位置也是随意的。这里选择放在resources根下，相当于放到了类的根路径下。
 注意4：将CarMapper.xml文件路径配置到mybatis-config.xml：
+
 ```xml
 <mapper resource="CarMapper.xml"/>
 ```
+
+注意5：**这个配置文件是专门用来编写SQL语句的配置文件。**(一个表一个，t_user表，一般对应一个UserMapper.xml，t_student表，一般对应一个StudentMapper.xml)。不是必须一个表对应一个Mapper，也可以配置到一个Mapper中。
 
 - 步骤5：编写MyBatisIntroductionTest代码
 ```java
@@ -266,6 +285,10 @@ import java.io.InputStream;
  * @author 老杜
  * @since 1.0
  * @version 1.0
+ *
+ * 在MyBatis当中，负责执行SQL语句的对象叫做SqlSession，是一个Java程序和数据库之间的一次会话
+ * 要想获取SqlSession对象，需要先获取SqlSessionFactory对象，通过SqlSessionFactory工厂来生产SqlSession对象。
+ * 通过SqlSessionFactoryBuilder对象的build方法，可以获取一个SqlSessionFactory对象。
  */
 public class MyBatisIntroductionTest {
     public static void main(String[] args) {
@@ -288,9 +311,16 @@ public class MyBatisIntroductionTest {
 ```
 注意1：默认采用的事务管理器是：JDBC。JDBC事务默认是不提交的，需要手动提交。
 
+mybatis的核心对象包括：SqlSessionFactoryBuilder、SqlSessionFactory、SqlSession。
+
 - 步骤6：运行程序，查看运行结果，以及数据库表中的数据
    - ![211D2E7E-E62B-413a-9710-72AC1EC7D894.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1659599289005-00bae72a-c64f-41b5-9b87-162f8958efa5.png#averageHue=%23998366&clientId=u6b7aa99c-2be4-4&from=paste&height=171&id=u1f6e97f2&originHeight=171&originWidth=458&originalType=binary&ratio=1&rotation=0&showTitle=false&size=9426&status=done&style=none&taskId=u004b6ae8-ff94-42f0-bf96-9acc738af9d&title=&width=458)
    - ![2A4C1E6E-56B8-440e-A368-F10434EACC2D.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1659599334361-3c2733c1-29d5-474c-a217-552ec331b523.png#averageHue=%23f4f3f1&clientId=u6b7aa99c-2be4-4&from=paste&height=189&id=u5cad9434&originHeight=189&originWidth=611&originalType=binary&ratio=1&rotation=0&showTitle=false&size=11487&status=done&style=none&taskId=u065d7ebf-be3a-4f82-8bae-c9c4550558c&title=&width=611)
+
+关于第一个程序的小细节：
+
+
+
 ## 2.4 关于MyBatis核心配置文件的名字和路径详解
 
 - 核心配置文件的名字是随意的，因为以下的代码：

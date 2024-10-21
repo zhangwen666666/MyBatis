@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<configuration>
+    <environments default="examDB">
+        <environment id="zwDB">
+            <transactionManager type="JDBC"/>
+            <!--数据源是获取connection对象的。-->
+            <!--POOLED UNPOOLED JNDI-->
+            <!--所有的数据源都要实现JDK带的规范：javax.sql.DataSource-->
+            <dataSource type="UNPOOLED">
+                <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+                <property name="url" value="jdbc:mysql://localhost:3306/zw"/>
+                <property name="username" value="root"/>
+                <property name="password" value="1234"/>
+            </dataSource>
+        </environment>
+        <environment id="examDB">
+            <transactionManager type="JDBC"/>
+            <dataSource type="UNPOOLED">
+                <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+                <property name="url" value="jdbc:mysql://localhost:3306/exam"/>
+                <property name="username" value="root"/>
+                <property name="password" value="1234"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+    <mappers>
+        <mapper resource="SqlMapper.xml"/>
+    </mappers>
+</configuration>

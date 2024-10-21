@@ -7,7 +7,9 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="mybatis-001-introduction" />
+        <module name="parse-xml-dom4j" />
         <module name="mybatis-003-configuration" />
+        <module name="godbatis" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>

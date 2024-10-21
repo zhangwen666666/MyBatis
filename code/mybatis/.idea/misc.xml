@@ -5,6 +5,8 @@
     <option name="originalFiles">
       <list>
         <option value="$PROJECT_DIR$/mybatis-001-introduction/pom.xml" />
+        <option value="$PROJECT_DIR$/mybatis_002_crud/pom.xml" />
+        <option value="$PROJECT_DIR$/mybatis-003-configuration/pom.xml" />
       </list>
     </option>
   </component>

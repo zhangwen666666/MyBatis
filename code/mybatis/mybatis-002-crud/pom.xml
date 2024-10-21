@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.zw</groupId>
-    <artifactId>mybatis-001-introduction</artifactId>
+    <artifactId>mybatis-002-crud</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
@@ -32,14 +32,10 @@
             <version>4.13.1</version>
             <scope>test</scope>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-classic -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>1.5.6</version>
-            <scope>test</scope>
         </dependency>
-
     </dependencies>
-
 </project>

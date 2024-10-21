@@ -272,41 +272,28 @@ while(rs.next()){
 
 - 步骤5：编写MyBatisIntroductionTest代码
 ```java
-package com.powernode.mybatis;
+public static void main(String[] args) throws Exception{
+    // 获取SqlSessionFactoryBuilder对象
+    SqlSessionFactoryBuilder sqlSessionFactoryBuilder = new SqlSessionFactoryBuilder();
 
-import org.apache.ibatis.session.SqlSession;
-import org.apache.ibatis.session.SqlSessionFactory;
-import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+    // 获取SqlSessionFactory对象
+    // 获取一个输入流指向myBatis核心配置文件 这里使用myBatis框架的一个方法
+    // InputStream in = Resources.getResourceAsStream("mybatis-config.xml");
+    InputStream in = new FileInputStream("mybatis-001-introduction/src/main/resources/mybatis-config.xml");
 
-import java.io.InputStream;
+    SqlSessionFactory sqlSessionFactory = sqlSessionFactoryBuilder.build(in);
 
-/**
- * MyBatis入门程序
- * @author 老杜
- * @since 1.0
- * @version 1.0
- *
- * 在MyBatis当中，负责执行SQL语句的对象叫做SqlSession，是一个Java程序和数据库之间的一次会话
- * 要想获取SqlSession对象，需要先获取SqlSessionFactory对象，通过SqlSessionFactory工厂来生产SqlSession对象。
- * 通过SqlSessionFactoryBuilder对象的build方法，可以获取一个SqlSessionFactory对象。
- */
-public class MyBatisIntroductionTest {
-    public static void main(String[] args) {
-        // 1. 创建SqlSessionFactoryBuilder对象
-        SqlSessionFactoryBuilder sqlSessionFactoryBuilder = new SqlSessionFactoryBuilder();
-        // 2. 创建SqlSessionFactory对象
-        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("mybatis-config.xml");
-        SqlSessionFactory sqlSessionFactory = sqlSessionFactoryBuilder.build(is);
-        // 3. 创建SqlSession对象
-        SqlSession sqlSession = sqlSessionFactory.openSession();
-        // 4. 执行sql
-        int count = sqlSession.insert("insertCar"); // 这个"insertCar"必须是sql的id
-        System.out.println("插入几条数据：" + count);
-        // 5. 提交（mybatis默认采用的事务管理器是JDBC，默认是不提交的，需要手动提交。）
-        sqlSession.commit();
-        // 6. 关闭资源（只关闭是不会提交的）
-        sqlSession.close();
-    }
+    // 获取SqlSession对象
+    SqlSession sqlSession = sqlSessionFactory.openSession();
+
+    // 执行SQl语句 (这里需要传入一个参数，就是Mapper文件中的insert语句的id)
+    // 返回值是影响数据库表当中的记录的条数
+    int count = sqlSession.insert("insertCar");
+
+    System.out.println(count);
+
+    // 手动提交
+    sqlSession.commit();
 }
 ```
 注意1：默认采用的事务管理器是：JDBC。JDBC事务默认是不提交的，需要手动提交。
@@ -316,8 +303,6 @@ mybatis的核心对象包括：SqlSessionFactoryBuilder、SqlSessionFactory、Sq
 - 步骤6：运行程序，查看运行结果，以及数据库表中的数据
    - ![211D2E7E-E62B-413a-9710-72AC1EC7D894.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1659599289005-00bae72a-c64f-41b5-9b87-162f8958efa5.png#averageHue=%23998366&clientId=u6b7aa99c-2be4-4&from=paste&height=171&id=u1f6e97f2&originHeight=171&originWidth=458&originalType=binary&ratio=1&rotation=0&showTitle=false&size=9426&status=done&style=none&taskId=u004b6ae8-ff94-42f0-bf96-9acc738af9d&title=&width=458)
    - ![2A4C1E6E-56B8-440e-A368-F10434EACC2D.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1659599334361-3c2733c1-29d5-474c-a217-552ec331b523.png#averageHue=%23f4f3f1&clientId=u6b7aa99c-2be4-4&from=paste&height=189&id=u5cad9434&originHeight=189&originWidth=611&originalType=binary&ratio=1&rotation=0&showTitle=false&size=11487&status=done&style=none&taskId=u065d7ebf-be3a-4f82-8bae-c9c4550558c&title=&width=611)
-
-关于第一个程序的小细节：
 
 
 
@@ -381,54 +366,94 @@ InputStream is = Resources.getResourceAsStream("mybatis-config.xml");
 ```
 ## 2.5 MyBatis第一个比较完整的代码写法
 ```java
-package com.powernode.mybatis;
-
-import org.apache.ibatis.io.Resources;
-import org.apache.ibatis.session.SqlSession;
-import org.apache.ibatis.session.SqlSessionFactory;
-import org.apache.ibatis.session.SqlSessionFactoryBuilder;
-
-import java.io.IOException;
-
-/**
- * 比较完整的第一个mybatis程序写法
- * @author 老杜
- * @since 1.0
- * @version 1.0
- */
-public class MyBatisCompleteCodeTest {
-    public static void main(String[] args) {
-        SqlSession sqlSession = null;
-        try {
-            // 1.创建SqlSessionFactoryBuilder对象
-            SqlSessionFactoryBuilder sqlSessionFactoryBuilder = new SqlSessionFactoryBuilder();
-            // 2.创建SqlSessionFactory对象
-            SqlSessionFactory sqlSessionFactory = sqlSessionFactoryBuilder.build(Resources.getResourceAsStream("mybatis-config.xml"));
-            // 3.创建SqlSession对象
-            sqlSession = sqlSessionFactory.openSession();
-            // 4.执行SQL
-            int count = sqlSession.insert("insertCar");
-            System.out.println("更新了几条记录：" + count);
-            // 5.提交
-            sqlSession.commit();
-        } catch (Exception e) {
-            // 回滚
-            if (sqlSession != null) {
-                sqlSession.rollback();
-            }
-            e.printStackTrace();
-        } finally {
-            // 6.关闭
-            if (sqlSession != null) {
-                sqlSession.close();
-            }
+public static void main(String[] args) {
+    SqlSession sqlSession = null;
+    try {
+        SqlSessionFactoryBuilder sqlSessionFactoryBuilder = new SqlSessionFactoryBuilder();
+        InputStream in = Resources.getResourceAsStream("mybatis-config.xml");
+        SqlSessionFactory sqlSessionFactory = sqlSessionFactoryBuilder.build(in);
+        // 开启会话（底层开启事务）
+        sqlSession = sqlSessionFactory.openSession();
+        // 执行SQL语句，处理业务
+        int count = sqlSession.insert("insertCar");
+        System.out.println("插入了" + count + "条记录！！");
+        // 提交事务
+        sqlSession.commit();
+    } catch (Exception e) {
+        // 遇到异常最好回滚事务
+        if (sqlSession != null) {
+            sqlSession.rollback();
+        }
+        e.printStackTrace();
+    } finally {
+        // 关闭会话，释放资源
+        if (sqlSession != null) {
+            sqlSession.close();
         }
     }
 }
 ```
 运行后数据库表的变化：
 ![EC983E7A-7A85-4df7-B5FC-5C4FDC8EA592.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1659604100979-edc9b06f-93bb-4c55-880b-38e219d9d9e3.png#averageHue=%23f3f1ef&clientId=u6b7aa99c-2be4-4&from=paste&height=206&id=u4da72fe6&originHeight=206&originWidth=590&originalType=binary&ratio=1&rotation=0&showTitle=false&size=13721&status=done&style=none&taskId=u6651710f-a20b-4007-b39b-0a2f73d81c6&title=&width=590)
-## 2.6 引入JUnit
+
+
+
+## 2.6 关于第一个程序的小细节
+
+1. mybatis中sql语句的结尾";"可以省略。
+
+2. Resources.getResourceAsStream：以后凡事遇到resource这个单词，大部分情况下，这种加载方式就是从类的根路径下开始加载的。（开始查找）。底层实际上调用的是ClassLoader.getSystemClassLoader().getResourceAsStream()方法
+
+3. 创建流的时候采用以下方式也可以：这种方式的缺点是，可移植性太差，移植到其他操作系统中可能会出错。例如当前在windows环境下，使用绝对路径，要移植到linux下，就会出问题。又或者是在windows使用相对路径(从当前项目的根下开始，如：mybatis-001-introduction/src/main/resources/mybatis-config.xml)，移植到其他平台可能相对路径会发生变化。
+
+   ```java
+   InputStream in = new FileInputStream("文件的路径");
+   ```
+
+4. 也可以采用以下方式创建流。ClassLoader.getSystemClassLoader()是获取系统类加载器，系统类加载器有一个方法getResourceAsStream()，可以从类路径下加载资源。
+
+   ```java
+   InputStream in = ClassLoader.getSystemClassLoader().getResourceAsStream("mybatis-config.xml");
+   ```
+
+5. CarMapper.xml文件的名字和路径不是固定的，是在mybatis核心配置文件中配置的：
+
+   ```xml
+   <!--resource属性是从类路径下开始查找-->
+   <mapper resource="CarMapper.xml" />
+   <!--如果配置绝对路径的话需要使用url属性，并且在路径前要加上file:///-->
+   <mapper url="file:///d:/CarMapper.xml" />
+   ```
+
+6. 关于mybatis的事务管理机制。（深度剖析）
+
+   * 在mybatis-config.xml文件中，可以通过一下的配置进行mybatis的事务管理。
+
+     ```xml
+     <transactionManager type="JDBC"/>
+     ```
+
+   * type属性的值有两个：JDBC、MANAGED  (不区分大小写)
+
+   * 在mybatis中提供了两种事务管理机制：
+
+     * JDBC事务管理器：mybatis框架自己管理事务，自己采用原生的JDBC代码去管理事务。底层创建的是JdbcTransaction对象。
+
+       ```java
+       SqlSession sqlSession = sqlSessionFactory.openSession(); // connection.setAutoCommit(false);
+       sqlSession.commit(); // connection.commit();
+       // 这种方式不用手动提交事务，因为这种方式压根没有开启事务，
+       // 因为没有执行connection.setAutoCommit(false)；这种方式是不建议的
+       SqlSession sqlSession = sqlSessionFactory.openSession(true);
+       ```
+
+       JDBC中没有在JDBC中：connection.setAutoCommit(false)；的话，默认的autoCommit就是true。
+
+     * MANAGED事务管理器：mybatis不再负责事务的管理了。事务管理交给其他容器来负责，例如：spring。对于我们当前的代码，如果配置为MANAGED，那么事务是没人管的，也就是没有开启事务，就会自动提交。 
+
+
+
+## 2.7 引入JUnit
 
 - JUnit是专门做单元测试的组件。
    - 在实际开发中，单元测试一般是由我们Java程序员来完成的。
@@ -515,7 +540,10 @@ public class CarMapperTest {
 ```
 执行单元测试，查看数据库表的变化：
 ![AEE76A27-5761-4162-B9DB-CCE0814EC06C.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1659604159905-5853a1c1-b266-4a74-8f25-8b7a326d84d6.png#averageHue=%23f3f1ee&clientId=u6b7aa99c-2be4-4&from=paste&height=224&id=ue1281902&originHeight=224&originWidth=562&originalType=binary&ratio=1&rotation=0&showTitle=false&size=15023&status=done&style=none&taskId=u8a987f16-e633-4fe7-a462-68ec6db2bb0&title=&width=562)
-## 2.7 引入日志框架logback
+
+
+
+## 2.8 引入日志框架logback
 
 - 引入日志框架的目的是为了看清楚mybatis执行的具体sql。
 - 启用标准日志组件，只需要在mybatis-config.xml文件中添加以下配置：【可参考mybatis手册】
@@ -538,7 +566,7 @@ public class CarMapperTest {
 </dependency>
 ```
 
-   - 第二步：引入logback相关配置文件（文件名叫做logback.xml或logback-test.xml，放到类路径当中）
+   - 第二步：引入logback相关配置文件（文件名必须叫做logback.xml或logback-test.xml，必须放到类路径当中）
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 
@@ -585,7 +613,7 @@ public class CarMapperTest {
 
 - 再次执行单元测试方法testInsertCar，查看控制台是否有sql语句输出
    - ![E75C0BCA-F8D3-44f8-AABB-282510093C8C.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1659610464472-e3b9e8b9-d29b-4f9b-ad34-dab427fe3a45.png#averageHue=%2334312f&clientId=u6b7aa99c-2be4-4&from=paste&height=528&id=uce9a4d58&originHeight=528&originWidth=1644&originalType=binary&ratio=1&rotation=0&showTitle=false&size=113799&status=done&style=none&taskId=ub0b377eb-9933-4c71-a4e7-2d75cda3771&title=&width=1644)
-## 2.8 MyBatis工具类SqlSessionUtil的封装
+## 2.9 MyBatis工具类SqlSessionUtil的封装
 
 - 每一次获取SqlSession对象代码太繁琐，封装一个工具类
 ```java
@@ -608,6 +636,7 @@ public class SqlSessionUtil {
 
     /**
      * 类加载时初始化sqlSessionFactory对象
+     * 一个sqlSessionFactory对象对应一个environment，一个environment对应一个数据库
      */
     static {
         try {
@@ -657,7 +686,11 @@ public void testInsertCar(){
    - logback.xml放在类的根路径下
    - 提供com.powernode.mybatis.utils.SqlSessionUtil工具类
    - 创建测试用例：com.powernode.mybatis.CarMapperTest
+
+
+
 ## 3.1 insert（Create）
+
 分析以下SQL映射文件中SQL语句存在的问题
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
@@ -689,46 +722,28 @@ ps.setString(5,"燃油车");
 **在sql语句中使用 #{map集合的key} 来完成传值，#{} 等同于JDBC中的 ? ，#{}就是占位符**
 Java程序这样写：
 ```java
-package com.powernode.mybatis;
+public void testInsertCar(){
+    SqlSession sqlSession = SqlSessionUtil.openSession();
 
-import com.powernode.mybatis.utils.SqlSessionUtil;
-import org.apache.ibatis.session.SqlSession;
-import org.junit.Test;
+    // 这个对象我们先试用Map集合进行数据的封装
+    Map<String,Object> map = new HashMap<>();
+    map.put("k1", "1111");
+    map.put("k2", "比亚迪汉");
+    map.put("k3", 10.0);
+    map.put("k4", "2020-11-11");
+    map.put("k5", "电车");
 
-import java.util.HashMap;
-import java.util.Map;
-
-/**
- * 测试MyBatis的CRUD
- * @author 老杜
- * @version 1.0
- * @since 1.0
- */
-public class CarMapperTest {
-    @Test
-    public void testInsertCar(){
-        // 准备数据
-        Map<String, Object> map = new HashMap<>();
-        map.put("k1", "103");
-        map.put("k2", "奔驰E300L");
-        map.put("k3", 50.3);
-        map.put("k4", "2020-10-01");
-        map.put("k5", "燃油车");
-        // 获取SqlSession对象
-        SqlSession sqlSession = SqlSessionUtil.openSession();
-        // 执行SQL语句（使用map集合给sql语句传递数据）
-        int count = sqlSession.insert("insertCar", map);
-        System.out.println("插入了几条记录：" + count);
-    }
+    // 执行SQL语句
+    // 第一个参数：sqlId，从CarMapper.xml文件中复制
+    // 第二个参数：封装数据的对象
+    int count = sqlSession.insert("insertCar", map);
+    System.out.println(count);
+    sqlSession.commit();
+    sqlSession.close();
 }
 ```
 SQL语句这样写：
 ```xml
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper
-        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-
 <!--namespace先随便写-->
 <mapper namespace="car">
     <insert id="insertCar">
@@ -738,13 +753,9 @@ SQL语句这样写：
 ```
 **#{} 的里面必须填写map集合的key，不能随便写。**运行测试程序，查看数据库：
 ![2DD856C0-9725-4073-98C4-129D86B03B35.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1659666309110-2c00ecfe-1777-4c9a-8baa-1bc4e4ab47a0.png#averageHue=%23deb069&clientId=ua65e35c1-ae14-4&from=paste&height=179&id=u94fe22b6&originHeight=179&originWidth=560&originalType=binary&ratio=1&rotation=0&showTitle=false&size=11045&status=done&style=none&taskId=ubd9e1519-05eb-4464-9180-0c279df37e0&title=&width=560)
-如果#{}里写的是map集合中不存在的key会有什么问题？
-```xml
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper
-        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+**如果#{}里写的是map集合中不存在的key会有什么问题？**获取的是null
 
+```xml
 <mapper namespace="car">
     <insert id="insertCar">
         insert into t_car(car_num,brand,guide_price,produce_time,car_type) values(#{kk},#{k2},#{k3},#{k4},#{k5})
@@ -754,8 +765,9 @@ SQL语句这样写：
 运行程序：
 ![13079E0B-F436-4100-B4E1-BB5C3A58ADD9.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1659666601236-f892944d-8725-4816-b34c-621a9380eda8.png#averageHue=%2332302f&clientId=ua65e35c1-ae14-4&from=paste&height=344&id=u2059ad06&originHeight=344&originWidth=1560&originalType=binary&ratio=1&rotation=0&showTitle=false&size=65973&status=done&style=none&taskId=u6bdf7288-ce4c-4b43-8426-e6dca594b05&title=&width=1560)
 ![0E5B4E84-C76C-4724-87E5-D37C954D2C40.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1659666614107-2df4bd58-105b-4b76-881d-e1d19b4d4b98.png#averageHue=%23ddaf67&clientId=ua65e35c1-ae14-4&from=paste&height=191&id=uc44a11b1&originHeight=191&originWidth=537&originalType=binary&ratio=1&rotation=0&showTitle=false&size=11172&status=done&style=none&taskId=ua820004b-0e4a-43c7-bc42-fec65f1a4a2&title=&width=537)
-通过测试，看到程序并没有报错。正常执行。不过 #{kk} 的写法导致无法获取到map集合中的数据，最终导致数据库表car_num插入了NULL。
+通过测试，看到程序并没有报错。正常执行。**不过 #{kk} 的写法导致无法获取到map集合中的数据，最终导致数据库表car_num插入了NULL。如果该字段不能为null，就会报错**
 在以上sql语句中，可以看到#{k1} #{k2} #{k3} #{k4} #{k5}的可读性太差，为了增强可读性，我们可以将Java程序做如下修改：
+
 ```java
 Map<String, Object> map = new HashMap<>();
 // 让key的可读性增强
@@ -781,7 +793,7 @@ SQL语句做如下修改，这样可以增强程序的可读性：
 ![B84BC4D9-24C1-4310-A5D1-DFC407BBFA8C.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1659667098369-a13a16ec-6f02-44f2-85b7-8834b9ca161b.png#averageHue=%23ddaf6b&clientId=ua65e35c1-ae14-4&from=paste&height=161&id=u51a730e6&originHeight=161&originWidth=577&originalType=binary&ratio=1&rotation=0&showTitle=false&size=9427&status=done&style=none&taskId=ud2e4da5f-1985-4267-8282-e2bafa5fff3&title=&width=577)
 使用Map集合可以传参，那使用**pojo**（简单普通的java对象）可以完成传参吗？测试一下：
 
-- 第一步：定义一个pojo类Car，提供相关属性。
+- 第一步：定义一个pojo类Car，提供相关属性。(pojo类的属性用包装类型，防止字段为空时付给基本数据类型而引起报错)
 ```java
 package com.powernode.mybatis.pojo;
 
@@ -917,9 +929,10 @@ public void testInsertCarByPOJO(){
 再运行程序，查看数据库表中数据：
 ![17908172-C596-4d31-B3B8-09B6DDDD5C82.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1659668909618-59bddd05-fcfa-41cc-8c87-a7bcd7060c2f.png#averageHue=%23f7f5f3&clientId=ua65e35c1-ae14-4&from=paste&height=148&id=ud345a029&originHeight=148&originWidth=531&originalType=binary&ratio=1&rotation=0&showTitle=false&size=9058&status=done&style=none&taskId=u40d048ac-be67-4773-a75d-a81be15ea72&title=&width=531)
 **经过测试得出结论：**
-**如果采用map集合传参，#{} 里写的是map集合的key，如果key不存在不会报错，数据库表中会插入NULL。**
-**如果采用POJO传参，#{} 里写的是get方法的方法名去掉get之后将剩下的单词首字母变小写（例如：getAge对应的是#{age}，getUserName对应的是#{userName}），如果这样的get方法不存在会报错。**
+**如果采用map集合传参，#{} 里写的是map集合的key，如果key不存在不会报错，数据库表中会插入NULL。**但是如果数据表中该字段不允许为空，就会报错
+**如果采用POJO传参，#{} 里写的是get方法的方法名去掉get之后将剩下的单词首字母变小写（例如：getAge对应的是#{age}，getUserName对应的是#{userName})，如果这样的get方法不存在会报错。**
 注意：其实传参数的时候有一个属性parameterType，这个属性用来指定传参的数据类型，不过这个属性是可以省略的
+
 ```xml
 <insert id="insertCar" parameterType="java.util.Map">
   insert into t_car(car_num,brand,guide_price,produce_time,car_type) values(#{carNum},#{brand},#{guidePrice},#{produceTime},#{carType})
@@ -929,7 +942,10 @@ public void testInsertCarByPOJO(){
   insert into t_car(car_num,brand,guide_price,produce_time,car_type) values(#{carNum},#{brand},#{guidePrice},#{produceTime},#{carType})
 </insert>
 ```
+
+
 ## 3.2 delete（Delete）
+
 需求：根据car_num进行删除。
 SQL语句这样写：
 ```xml
@@ -943,15 +959,21 @@ Java程序这样写：
 public void testDeleteByCarNum(){
     // 获取SqlSession对象
     SqlSession sqlSession = SqlSessionUtil.openSession();
-    // 执行SQL语句
+    // 执行SQL语句 第二个参数可以写数字，也可以写字符串
     int count = sqlSession.delete("deleteByCarNum", "102");
     System.out.println("删除了几条记录：" + count);
+    sqlSession.commit();
+    sqlSession.close();
 }
 ```
 运行结果：
 ![2ECBA22E-ABC9-4dc1-87AD-F4842083A2CD.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1659671944122-784bbd93-06dc-4faf-a18a-6beef6cf15b5.png#averageHue=%23332f2e&clientId=ua65e35c1-ae14-4&from=paste&height=228&id=u9ba38c62&originHeight=228&originWidth=1287&originalType=binary&ratio=1&rotation=0&showTitle=false&size=44537&status=done&style=none&taskId=uc25ecbf1-cea2-4719-9fba-2b8954b1650&title=&width=1287)
 **注意：当占位符只有一个的时候，${} 里面的内容可以随便写。**
+
+
+
 ## 3.3 update（Update）
+
 需求：修改id=34的Car信息，car_num为102，brand为比亚迪汉，guide_price为30.23，produce_time为2018-09-10，car_type为电车
 修改前：
 ![25135D96-3CD7-43f9-9E0F-7C90BCEDF28E.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1659680723161-c7563b14-b4f7-4467-90b5-4dfca148ca83.png#averageHue=%23d7a964&clientId=ua65e35c1-ae14-4&from=paste&height=238&id=u63346d62&originHeight=238&originWidth=599&originalType=binary&ratio=1&rotation=0&showTitle=false&size=15600&status=done&style=none&taskId=ubd0db29a-16d4-4ec2-8990-3c666f90de5&title=&width=599)
@@ -988,7 +1010,11 @@ Java代码如下：
 ![0670B92C-E654-49a7-839C-814850A4D79A.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1659681449799-48b44db3-d006-452c-8bd8-d088850c4394.png#averageHue=%23302f2e&clientId=ua65e35c1-ae14-4&from=paste&height=181&id=ub8471fdb&originHeight=181&originWidth=1638&originalType=binary&ratio=1&rotation=0&showTitle=false&size=37090&status=done&style=none&taskId=ua2b34e73-5ff6-4e81-b735-8bad85748c1&title=&width=1638)
 ![7EC1586E-DB9E-47ca-A556-B8822A8F7429.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1659681391738-02de5e94-8880-4754-b08a-0e807362ba3c.png#averageHue=%23d7ac67&clientId=ua65e35c1-ae14-4&from=paste&height=192&id=uc8685bbd&originHeight=192&originWidth=545&originalType=binary&ratio=1&rotation=0&showTitle=false&size=11408&status=done&style=none&taskId=ud923fb36-c275-4a94-af10-522a44df96f&title=&width=545)
 当然了，如果使用**map**传数据也是可以的。
+
+
+
 ## 3.4 select（Retrieve）
+
 select语句和其它语句不同的是：查询会有一个结果集。来看mybatis是怎么处理结果集的！！！
 ### 查询一条数据
 需求：查询id为1的Car信息
@@ -1000,14 +1026,14 @@ SQL语句如下：
 ```
 Java程序如下：
 ```java
-@Test
-public void testSelectCarById(){
-    // 获取SqlSession对象
-    SqlSession sqlSession = SqlSessionUtil.openSession();
-    // 执行SQL语句
-    Object car = sqlSession.selectOne("selectCarById", 1);
-    System.out.println(car);
-}
+    public void testSelectById(){
+        SqlSession sqlSession = SqlSessionUtil.openSession();
+        // 根据id查询，执行SQL语句
+        // mybatis底层执行select语句之后，一定会返回一个结果集对象：ResultSet
+        Object car = sqlSession.selectOne("selectCarById", 1);
+        System.out.println(car);
+        sqlSession.close();
+    }
 ```
 运行结果如下：
 ```java
@@ -1016,7 +1042,8 @@ public void testSelectCarById(){
     It's likely that neither a Result Type nor a Result Map was specified.						 【翻译】：很可能既没有指定结果类型，也没有指定结果映射。
 ```
 以上的异常大致的意思是：对于一个查询语句来说，你需要指定它的“结果类型”或者“结果映射”。
-所以说，你想让mybatis查询之后返回一个Java对象的话，至少你要告诉mybatis返回一个什么类型的Java对象，可以在<select>标签中添加resultType属性，用来指定查询要转换的类型：
+所以说，你想让mybatis查询之后返回一个Java对象的话，至少你要告诉mybatis返回一个什么类型的Java对象，可以在<select>标签中添加resultType属性，用来指定查询结果集要转换的类型：
+
 ```xml
 <select id="selectCarById" resultType="com.powernode.mybatis.pojo.Car">
   select * from t_car where id = #{id}
@@ -1066,13 +1093,19 @@ public void testSelectCarAll(){
     List<Object> cars = sqlSession.selectList("selectCarAll");
     // 输出结果
     cars.forEach(car -> System.out.println(car));
+    sqlSession.close();
 }
 ```
 运行结果如下：
 ![E1B82451-6452-4e93-BD75-DC6D8B9ADD14.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1659685063045-cbeabc75-de94-400b-8d41-ee797076b1a0.png#averageHue=%2332302f&clientId=ua65e35c1-ae14-4&from=paste&height=461&id=u38578cd4&originHeight=461&originWidth=1299&originalType=binary&ratio=1&rotation=0&showTitle=false&size=97376&status=done&style=none&taskId=u26ba86cb-1139-4aec-9ec1-cff6cf008a9&title=&width=1299)
+
+
+
 ## 3.5 关于SQL Mapper的namespace
-在SQL Mapper配置文件中<mapper>标签的namespace属性可以翻译为命名空间，这个命名空间主要是为了防止sqlId冲突的。
+
+在SQL Mapper配置文件中<mapper>标签的namespace属性可以翻译为命名空间，**这个命名空间主要是为了防止sqlId冲突的。**
 创建CarMapper2.xml文件，代码如下：
+
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper
@@ -1122,7 +1155,7 @@ Java代码修改如下：
 public void testNamespace(){
     // 获取SqlSession对象
     SqlSession sqlSession = SqlSessionUtil.openSession();
-    // 执行SQL语句
+    // 执行SQL语句  namespace+id
     //List<Object> cars = sqlSession.selectList("car.selectCarAll");
     List<Object> cars = sqlSession.selectList("car2.selectCarAll");
     // 输出结果
@@ -1267,13 +1300,13 @@ public class ConfigurationTest {
         // 两个数据库对应两个SqlSessionFactory对象，以此类推
         SqlSessionFactoryBuilder sqlSessionFactoryBuilder = new SqlSessionFactoryBuilder();
 
-        // 使用默认数据库
+        // 使用默认数据库(环境)
         SqlSessionFactory sqlSessionFactory = sqlSessionFactoryBuilder.build(Resources.getResourceAsStream("mybatis-config.xml"));
         SqlSession sqlSession = sqlSessionFactory.openSession(true);
         int count = sqlSession.insert("insertCar", car);
         System.out.println("插入了几条记录：" + count);
 
-        // 使用指定数据库
+        // 使用指定数据库(环境)
         SqlSessionFactory sqlSessionFactory1 = sqlSessionFactoryBuilder.build(Resources.getResourceAsStream("mybatis-config.xml"), "dev");
         SqlSession sqlSession1 = sqlSessionFactory1.openSession(true);
         int count1 = sqlSession1.insert("insertCar", car);
@@ -1284,7 +1317,11 @@ public class ConfigurationTest {
 执行结果：
 ![FF0CD72D-D26C-4ccb-9202-593CDA8C53D8.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1660117624656-64973cf7-6700-43da-96fa-5960dfc5045b.png#clientId=uf25371ce-2df6-4&from=paste&height=520&id=ube5d1c7d&originHeight=520&originWidth=1627&originalType=binary&ratio=1&rotation=0&showTitle=false&size=122019&status=done&style=none&taskId=ub5627b32-0df7-4e4d-9968-dc704671e6c&title=&width=1627)
 ![B8C1BB12-6CB0-4f08-A96F-560B6268C8F8.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1660117692466-ecd6317f-5868-4858-a33c-0c7ec68044ac.png#clientId=uf25371ce-2df6-4&from=paste&height=499&id=ubeb926c4&originHeight=499&originWidth=756&originalType=binary&ratio=1&rotation=0&showTitle=false&size=32276&status=done&style=none&taskId=u8350f504-6e73-4222-8172-415d1cf2331&title=&width=756)
-## 4.2 transactionManager
+
+
+
+## 4.2 transactionManager(事务管理器)
+
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE configuration
@@ -1337,7 +1374,24 @@ public void testTransactionManager() throws Exception{
 当事务管理器是：MANAGED
 
 - 交给容器去管理事务，但目前使用的是本地程序，没有容器的支持，**当mybatis找不到容器的支持时：没有事务**。也就是说只要执行一条DML语句，则提交一次。
+
+
+
 ## 4.3 dataSource
+
+* dataSource被称为数据源。
+* dataSource作用是什么？为程序提供Connection对象。（但凡是给程序提供Connection对象的，都叫做数据源。）
+* 数据源实际上是一种规范。JDK中有这套规范：javax.sql.DataSource（这个数据源的规范，这套接口实际上是JDK规定的）
+* 实现接口我们也有可以自己编写数据源组件，只要实现javax.sql.DataSource接口就行了。实现接口当中的所有方法，这就有了自己的数据源。比如你可以写一个属于自己的数据库连接池(数据库连接池是提供连接对象的，所以数据库连接池就是一个数据源。)
+* 创建的数据源组件有哪些？（常见的数据库连接池有哪些？）
+  * 阿里巴巴的德鲁伊连接池：druid
+  * c3p0
+  * dbcp
+* type属性用来指定数据源的类型，就是指定具体使用什么方式来获取Connection对象。他有三个值，必须三选一。
+  * UNPOOLED：不使用数据库连接池技术。每一次请求都是创建新的connection对象。
+  * POOLED：使用mybatis自己实现的数据库连接池。
+  * JNDI：使用第三方实现的数据库连接池。JNDI是一套规范。大部分web容器都实现了JNDI规范：例如Tomcat、Jetty、WebLogic等。JNDI是Java命名目录接口。
+
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE configuration
@@ -1395,7 +1449,8 @@ Java测试程序不需要修改，直接执行，看控制台输出：
 <dataSource type="JNDI">
 ```
 JNDI的方式：表示对接JNDI服务器中的连接池。这种方式给了我们可以使用第三方连接池的接口。如果想使用dbcp、c3p0、druid（德鲁伊）等，需要使用这种方式。
-这种再重点说一下type="POOLED"的时候，它的属性有哪些？
+**这种再重点说一下type="POOLED"的时候，它的属性有哪些？**
+
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE configuration
@@ -1454,7 +1509,11 @@ public void testPool() throws Exception{
 </select>
 ```
 ![E2C814E9-489D-4f4a-94F6-2ED5F6E56F54.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1660128646511-8df1006a-dd85-48d1-9b88-ce7969d9b546.png#averageHue=%2335302f&clientId=uf25371ce-2df6-4&from=paste&height=748&id=u2b331339&originHeight=748&originWidth=1507&originalType=binary&ratio=1&rotation=0&showTitle=false&size=165804&status=done&style=none&taskId=ud490fe5a-777b-41eb-9b83-a702e843fe3&title=&width=1507)
+
+ 
+
 ## 4.4 properties
+
 mybatis提供了更加灵活的配置，连接数据库的信息可以单独写到一个属性资源文件中，假设在类的根路径下创建jdbc.properties文件，配置如下：
 ```properties
 jdbc.driver=com.mysql.cj.jdbc.Driver
@@ -1509,7 +1568,11 @@ public void testProperties() throws Exception{
 
 - 第一种方式：查看dtd约束文件。
 - 第二种方式：通过idea的报错提示信息。【一般采用这种方式】
+
+
+
 ## 4.5 mapper
+
 mapper标签用来指定SQL映射文件的路径，包含多种指定方式，这里先主要看其中两种：
 第一种：resource，从类的根路径下开始加载【比url常用】
 ```xml

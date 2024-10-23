@@ -110,7 +110,7 @@ while(rs.next()){
    - iBATIS一词来源于“internet”和“abatis”的组合，是一个基于Java的持久层框架。iBATIS提供的持久层框架包括SQL Maps和Data Access Objects（DAOs）。
    
 - 打开mybatis代码可以看到它的包结构中包含：ibatis
-   
+  
    ![image-20241017173134577](C:\Users\PC\AppData\Roaming\Typora\typora-user-images\image-20241017173134577.png)
    
 - ORM：对象关系映射
@@ -121,7 +121,7 @@ while(rs.next()){
    - M（Mapping）：将Java虚拟机中的Java对象映射到数据库表中一行记录，或是将数据库表中一行记录映射成Java虚拟机中的一个Java对象。
    
    - ORM图示
-      
+     
       ![image-20241017175034446](C:\Users\PC\AppData\Roaming\Typora\typora-user-images\image-20241017175034446.png)
       
       - ![C48A1A89-244D-40f4-85DB-F1E665A2EA62.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1659580953095-86e388ac-13b5-4448-b90a-2aacd36688ef.png#averageHue=%23d7d9d2&clientId=u6b7aa99c-2be4-4&from=paste&height=200&id=uebaeb73c&originHeight=200&originWidth=579&originalType=binary&ratio=1&rotation=0&showTitle=false&size=98143&status=done&style=none&taskId=ua834ac11-2f7e-406c-9c58-d7665141cb3&title=&width=579)
@@ -3301,7 +3301,7 @@ public class AccountController extends HttpServlet {
 #### SqlSessionFactoryBuilder
 这个类可以被实例化、使用和丢弃，一旦创建了 SqlSessionFactory，就不再需要它了。 因此 SqlSessionFactoryBuilder 实例的最佳作用域是方法作用域（也就是局部方法变量）。 你可以重用 SqlSessionFactoryBuilder 来创建多个 SqlSessionFactory 实例，但最好还是不要一直保留着它，以保证所有的 XML 解析资源可以被释放给更重要的事情。
 #### SqlSessionFactory
-SqlSessionFactory 一旦被创建就应该在应用的运行期间一直存在，没有任何理由丢弃它或重新创建另一个实例。 使用 SqlSessionFactory 的最佳实践是在应用运行期间不要重复创建多次，多次重建 SqlSessionFactory 被视为一种代码“坏习惯”。因此 SqlSessionFactory 的最佳作用域是应用作用域。 有很多方法可以做到，最简单的就是使用单例模式或者静态单例模式。
+SqlSessionFactory 一旦被创建就应该在应用的运行期间一直存在，没有任何理由丢弃它或重新创建另一个实例(**除非你要连接另一个数据库**)。 使用 SqlSessionFactory 的最佳实践是在应用运行期间不要重复创建多次，多次重建 SqlSessionFactory 被视为一种代码“坏习惯”(**因为重建SqlSessionFactory都需要解析mybatis核心配置文件**)。因此 SqlSessionFactory 的最佳作用域是应用作用域。 有很多方法可以做到，最简单的就是使用单例模式或者静态单例模式。
 #### SqlSession
 每个线程都应该有它自己的 SqlSession 实例。SqlSession 的实例不是线程安全的，因此是不能被共享的，所以它的最佳的作用域是请求或方法作用域。 绝对不能将 SqlSession 实例的引用放在一个类的静态域，甚至一个类的实例变量也不行。 也绝不能将 SqlSession 实例的引用放在任何类型的托管作用域中，比如 Servlet 框架中的 HttpSession。 如果你现在正在使用一种 Web 框架，考虑将 SqlSession 放在一个和 HTTP 请求相似的作用域中。 换句话说，每次收到 HTTP 请求，就可以打开一个 SqlSession，返回一个响应后，就关闭它。 这个关闭操作很重要，为了确保每次都能执行关闭操作，你应该把这个关闭操作放到 finally 块中。 下面的示例就是一个确保 SqlSession 关闭的标准模式：
 ```java
@@ -3553,7 +3553,131 @@ public class AccountDaoImpl implements AccountDao {
   <version>3.29.1-GA</version>
 </dependency>
 ```
-样例代码：
+样例代码1：(已知要生成的类需要实现哪个方法)
+
+```java
+public void testGenerateFirstClass() throws Exception{
+    // 获取类池，这个类池就是用来生成class的
+    ClassPool pool = ClassPool.getDefault();
+    // 制造类 (需要告诉javassist类名是啥)
+    CtClass ctClass = pool.makeClass("com.zw.bank.dao.impl.AccountDaoImpl");
+    // 制造方法
+    String methodCode = "public void insert(){System.out.println(123);}";
+    CtMethod ctMethod = CtMethod.make(methodCode, ctClass);
+    // 将方法添加到类中
+    ctClass.addMethod(ctMethod);
+    // 在内存中生成class
+    ctClass.toClass();
+
+    // 类加载
+    Class<?> clazz = Class.forName("com.zw.bank.dao.impl.AccountDaoImpl");
+    // 创建对象调用insert方法
+    Object obj = clazz.newInstance();
+    Method insert = clazz.getDeclaredMethod("insert");
+    insert.invoke(obj);
+}
+```
+
+样例代码2：（已知AccountDaoImpl类实现了AccountDao接口，并且知道AccountDao接口中的方法具体是什么）
+
+```java
+public void testGenerateImpl() throws Exception{
+    // 获取类名
+    ClassPool pool = ClassPool.getDefault();
+    // 制造类
+    CtClass ctClass = pool.makeClass("com.zw.bank.dao.impl.AccountDaoImpl");
+    // 制造接口
+    CtClass ctInterface = pool.makeInterface("com.zw.bank.dao.AccountDao");
+    // 添加接口到类中 （相当于AccountDaoImpl implements AccountDao）
+    ctClass.addInterface(ctInterface);
+    // 实现接口中的方法
+    // 先制造方法
+    String methodCode = "public void delete(){System.out.println(\"hello delete\");}";
+    CtMethod ctMethod = CtMethod.make(methodCode, ctClass);
+    // 将方法添加到类中
+    ctClass.addMethod(ctMethod);
+
+    // 在内存中生成类
+    Class<?> clazz = ctClass.toClass();
+    AccountDao accountDao = (AccountDao) clazz.newInstance();
+    accountDao.delete();
+}
+```
+
+样例代码3：（已知AccountDaoImpl类实现了AccountDao接口，但是不知道AccountDao接口中有哪些方法，不知道这些方法的方法名，返回值，形参列表，修饰符）
+
+```java
+public void testGenerateAccountDaoImpl() throws Exception{
+    // 获取类池
+    ClassPool pool = ClassPool.getDefault();
+    // 制造类
+    CtClass ctClass = pool.makeClass("com.zw.bank.dao.impl.AccountDaoImpl");
+    // 制造接口
+    CtClass ctInterface = pool.makeInterface("com.zw.bank.dao.AccountDao");
+    // 添加接口到类中
+    ctClass.addInterface(ctInterface);
+    // 实现接口中的方法
+    Method[] methods = AccountDao.class.getDeclaredMethods();// 获取接口中的所有方法
+    Arrays.stream(methods).forEach(method -> {
+        // method是接口中的抽象方法，现在需要将其实现
+        try {
+            // 拼串来拼出方法的代码
+            StringBuilder methodCode = new StringBuilder();
+            methodCode.append("public "); // 修饰符列表
+            methodCode.append(method.getReturnType().getName());// 方法返回值类型
+            methodCode.append(" ");
+            methodCode.append(method.getName());// 方法名
+            methodCode.append("(");
+            // 拼接参数
+            Class<?>[] parameterTypes = method.getParameterTypes();
+            for (int i = 0; i < parameterTypes.length; i++) {
+                Class<?> parameterType = parameterTypes[i];
+                methodCode.append(parameterType.getName());// 拼接参数类型
+                methodCode.append(" ");
+                methodCode.append("arg" + i);// 参数名（可以随意了，但是不能重复）
+                // 如果不是最后一个形参，需要追加逗号
+                if (i != parameterTypes.length - 1) {
+                    methodCode.append(",");
+                }
+            }
+            methodCode.append("){System.out.println(1111);");
+            // 判断方法是否需要返回值,添加return语句
+            String returnTypeName = method.getReturnType().getSimpleName();
+            switch (returnTypeName) {
+                case "void" -> {
+                }
+                case "int" -> {
+                    methodCode.append("return 1;");
+                }
+                case "String" -> {
+                    methodCode.append("return \"hello\";");
+                }
+            }
+            methodCode.append("}");
+            System.out.println(methodCode);
+            CtMethod ctMethod = CtMethod.make(methodCode.toString(), ctClass);
+            ctClass.addMethod(ctMethod);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    });
+    // 在内存中生成class，并且加载到JVM当中
+    Class<?> clazz = ctClass.toClass();
+    // 创建对象
+    AccountDao accountDao = (AccountDao) clazz.newInstance();
+    // 调用方法
+    accountDao.delete();
+    int count = accountDao.insert("111");
+    int count1 = accountDao.update("111",3.14);
+    String s = accountDao.selectByActno("111");
+    System.out.println(count);
+    System.out.println(count1);
+    System.out.println(s);
+}
+```
+
+
+
 ```java
 package com.powernode.javassist;
 
@@ -3593,11 +3717,99 @@ public class JavassistTest {
 - --add-opens java.base/java.lang=ALL-UNNAMED
 - --add-opens java.base/sun.net.util=ALL-UNNAMED
 
-![DCBBD517-3C79-456f-817F-DB39E85661D3.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1660559749329-9288db13-204c-4354-a5ce-1190f78cb044.png#clientId=u51da7e76-efcd-4&from=paste&height=471&id=ud065408f&originHeight=471&originWidth=726&originalType=binary&ratio=1&rotation=0&showTitle=false&size=27122&status=done&style=shadow&taskId=uda515c55-91cf-4b24-9cb4-aa441c6a74d&title=&width=726)
+![image-20241023112820059](C:\Users\PC\AppData\Roaming\Typora\typora-user-images\image-20241023112820059.png)
 运行结果：
 ![B602078D-41E9-4d86-8735-36291B78380F.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1660559790161-90a4cae2-67be-4827-b981-b28910d9684e.png#clientId=u51da7e76-efcd-4&from=paste&height=163&id=udb225980&originHeight=163&originWidth=378&originalType=binary&ratio=1&rotation=0&showTitle=false&size=8301&status=done&style=shadow&taskId=u0905e524-3949-4d26-ba8f-c4729a4f02e&title=&width=378)
+
 ## 7.2 使用Javassist生成DaoImpl类
 使用Javassist动态生成DaoImpl类
+
+```java
+public class GenerateDaoProxy {
+
+    /**
+     * 给定一个接口，返回接口的实现类对象
+     *
+     * @param daoInterface 接口
+     * @return 实现接口类的对象
+     */
+    public static Object generate(SqlSession sqlSession, Class daoInterface) {
+        Object obj = null;
+        // 类池
+        ClassPool pool = ClassPool.getDefault();
+        // 制造类 (com.zw.bank.dao.AccountDao --> com.zw.bank.dao.AccountDaoProxy)
+        CtClass ctClass = pool.makeClass(daoInterface.getName() + "Proxy"); //本质上是动态生成代理类
+        // 制造接口
+        CtClass ctInterface = pool.makeInterface(daoInterface.getName());
+        // 实现接口
+        ctClass.addInterface(ctInterface);
+        // 实现接口中的所有方法
+        Method[] methods = daoInterface.getDeclaredMethods();
+        Arrays.stream(methods).forEach(method -> {
+            // method是抽象方法，要将其实现
+            try {
+                StringBuilder methodCode = new StringBuilder();
+                methodCode.append("public ");
+                methodCode.append(method.getReturnType().getName());
+                methodCode.append(" ");
+                methodCode.append(method.getName());
+                methodCode.append("(");
+                // 拼接形参
+                Class<?>[] parameterTypes = method.getParameterTypes();
+                for (int i = 0; i < parameterTypes.length; i++) {
+                    Class<?> parameterType = parameterTypes[i];
+                    methodCode.append(parameterType.getName());
+                    methodCode.append(" ");
+                    methodCode.append("arg" + i);
+                    if (i != parameterTypes.length - 1) {
+                        methodCode.append(",");
+                    }
+                }
+                methodCode.append(")");
+                methodCode.append("{");
+                // 方法体中的代码
+                methodCode.append("org.apache.ibatis.session.SqlSession sqlSession = com.zw.bank.utils.SqlSessionUtil.openSession();");
+                // 需要知道是什么类型的sql语句
+                // sql语句的id是框架使用者提供的，对于框架开发人员来说，不知道
+                // 所以mybatis框架开发者规定：凡是使用GenerateDaoProxy机制的，
+                // sqlId不能随便写，namespace必须是dao接口的全限定名称，id必须是dao接口中的方法名
+                String sqlId = daoInterface.getName() + "." + method.getName();
+                SqlCommandType sqlCommandType = sqlSession.getConfiguration().getMappedStatement(sqlId).getSqlCommandType();
+                if (sqlCommandType == SqlCommandType.INSERT) {
+
+                }
+                if (sqlCommandType == SqlCommandType.DELETE) {
+
+                }
+                if (sqlCommandType == SqlCommandType.UPDATE) {
+                    // return sqlSession.update("account.updateByActno", act);
+                    methodCode.append("return sqlSession.update(\"" + sqlId + "\", arg0);");
+                }
+                if (sqlCommandType == SqlCommandType.SELECT) {
+                    methodCode.append("return (" + method.getReturnType().getName() + ")sqlSession.selectOne(\"" + sqlId + "\", arg0);");
+                }
+                methodCode.append("");
+                methodCode.append("}");
+                CtMethod ctMethod = CtMethod.make(methodCode.toString(), ctClass);
+                ctClass.addMethod(ctMethod);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        // 创建对象
+        try {
+            Class<?> clazz = ctClass.toClass();
+            obj = clazz.newInstance();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return obj;
+    }
+}
+```
+
+
+
 ```java
 package com.powernode.bank.utils;
 
@@ -3741,6 +3953,7 @@ AccountDao accountDao = (AccountDao)sqlSession.getMapper(AccountDao.class);
 ${}：先进行sql语句拼接，然后再编译sql语句，底层是Statement实现。存在sql注入现象。只有在需要进行sql语句关键字拼接的情况下才会用到。
 需求：根据car_type查询汽车
 模块名：mybatis-005-antic
+
 ### 使用#{}
 依赖
 ```xml
@@ -4028,9 +4241,10 @@ CarMapper.xml文件修改如下：
 再执行测试程序：
 ![E38C761A-CCCF-4764-867E-1A361BC23CEB.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1660618019174-42718d2b-7cdd-4c70-8a44-055258d5ad29.png#clientId=ub45c156e-c1a9-4&from=paste&height=287&id=u0dfdb12d&originHeight=287&originWidth=1628&originalType=binary&ratio=1&rotation=0&showTitle=false&size=34208&status=done&style=shadow&taskId=uda2ed2ff-fd5d-4909-a585-e420d258c14&title=&width=1628)
 通过以上测试，可以看出，对于以上这种需求来说，还是建议使用 #{} 的方式。
-原则：能用 #{} 就不用 ${}
+原则：**能用 #{} 就不用 ${}**
+
 ### 什么情况下必须使用${}
-当需要进行sql语句关键字拼接的时候。必须使用${}
+**当需要进行sql语句关键字拼接的时候。必须使用${}**
 需求：通过向sql语句中注入asc或desc关键字，来完成数据的升序或降序排列。
 
 - **先使用#{}尝试：**
@@ -4067,7 +4281,7 @@ public void testSelectAll(){
 ![9F39C1BA-BFB5-4482-8859-A665AF9BB4F5.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1660619431786-c9ac3a1d-c9f7-494f-bfe3-496ce4beb914.png#clientId=ub45c156e-c1a9-4&from=paste&height=457&id=ucadbc85e&originHeight=457&originWidth=1647&originalType=binary&ratio=1&rotation=0&showTitle=false&size=55571&status=done&style=shadow&taskId=ub8101801-cb14-4323-bf76-530acda8b5c&title=&width=1647)
 报错的原因是sql语句不合法，因为采用这种方式传值，最终sql语句会是这样：
 select id,car_num as carNum,brand,guide_price as guidePrice,produce_time as produceTime,car_type as carType from t_car order by carNum 'desc'
-desc是一个关键字，不能带单引号的，所以在进行sql语句关键字拼接的时候，必须使用${}
+**desc是一个关键字，不能带单引号的，所以在进行sql语句关键字拼接的时候，必须使用${}**
 
 - **使用${} 改造**
 ```xml

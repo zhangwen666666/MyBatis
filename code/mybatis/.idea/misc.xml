@@ -9,6 +9,11 @@
         <option value="$PROJECT_DIR$/mybatis-003-configuration/pom.xml" />
         <option value="$PROJECT_DIR$/parse-xml-dom4j/pom.xml" />
         <option value="$PROJECT_DIR$/godbatis/pom.xml" />
+        <option value="$PROJECT_DIR$/mybatis-004-web/pom.xml" />
+        <option value="$PROJECT_DIR$/mybaits-004-web/pom.xml" />
+        <option value="$PROJECT_DIR$/javassist-test/pom.xml" />
+        <option value="$PROJECT_DIR$/mybatis-005-crud2/pom.xml" />
+        <option value="$PROJECT_DIR$/mybatis-006-antic/pom.xml" />
       </list>
     </option>
   </component>

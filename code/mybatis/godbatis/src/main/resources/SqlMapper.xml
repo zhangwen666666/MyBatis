@@ -8,6 +8,6 @@
     </insert>
 
     <select id="selectUserById" resultType="org.god.ibatis.pojo.User">
-        select name, age from t_user where id = #{id}
+        select id, name, age from t_user where id = #{id}
     </select>
 </mapper>

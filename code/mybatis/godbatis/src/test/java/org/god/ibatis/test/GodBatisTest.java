@@ -26,4 +26,13 @@ public class GodBatisTest {
         sqlSession.commit();
         sqlSession.close();
     }
+
+    @Test
+    public void testSelectUser(){
+        SqlSessionFactoryBuilder sqlSessionFactoryBuilder = new SqlSessionFactoryBuilder();
+        SqlSessionFactory sessionFactory = sqlSessionFactoryBuilder.build(Resources.getResourceAsStream("godbatis-config.xml"));
+        SqlSession sqlSession = sessionFactory.openSession();
+        Object o = sqlSession.selectOne("user.selectUserById", "111");
+        System.out.println(o);
+    }
 }

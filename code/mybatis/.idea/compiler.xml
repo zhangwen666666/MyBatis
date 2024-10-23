@@ -6,10 +6,14 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="mybatis-006-antic" />
+        <module name="mybatis-004-web" />
+        <module name="godbatis" />
+        <module name="mybatis-005-crud2" />
         <module name="mybatis-001-introduction" />
+        <module name="javassist-test" />
         <module name="parse-xml-dom4j" />
         <module name="mybatis-003-configuration" />
-        <module name="godbatis" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>

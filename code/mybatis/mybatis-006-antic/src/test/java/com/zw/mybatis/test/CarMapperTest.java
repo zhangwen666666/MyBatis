@@ -26,4 +26,13 @@ public class CarMapperTest {
         cars.forEach(System.out::println);
         sqlSession.close();
     }
+
+    @Test
+    public void testSelectById(){
+        SqlSession sqlSession = SqlSessionUtil.openSession();
+        CarMapper mapper = sqlSession.getMapper(CarMapper.class);
+        Car car = mapper.selectById(2L);
+        System.out.println(car);
+        sqlSession.close();
+    }
 }

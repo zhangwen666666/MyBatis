@@ -18,4 +18,6 @@ public interface CarMapper {
      * @return
      */
     List<Car> selectAllByAscOrDesc(String ascOrDesc);
+
+    Car selectById(Long id);
 }

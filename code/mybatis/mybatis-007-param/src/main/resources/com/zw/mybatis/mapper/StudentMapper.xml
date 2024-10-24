@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zw.mybatis.mapper.StudentMapper">
+    <select id="selectById" resultType="Student">
+        select * from t_student where id=#{id}
+    </select>
+
+    <select id="selectByName" resultType="Student">
+        select * from t_student where name = #{name}
+    </select>
+
+    <select id="selectByBirth" resultType="student">
+        select * from t_student where birth= #{birth}
+    </select>
+
+    <select id="selectBySex" resultType="student">
+        select * from t_student where sex = #{sex}
+    </select>
+
+    <select id="selectByNameAndSex" resultType="student">
+        select * from t_student where name = #{name} and sex = #{sex}
+    </select>
+</mapper>

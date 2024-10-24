@@ -4296,10 +4296,11 @@ select id,car_num as carNum,brand,guide_price as guidePrice,produce_time as prod
 ```
 再次执行测试程序：
 ![BD556528-B6C2-4842-A776-37B26B3B0F43.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1660619635336-168c3097-fe96-49aa-b855-d111f5f6e66d.png#clientId=ub45c156e-c1a9-4&from=paste&height=388&id=u310de771&originHeight=388&originWidth=1653&originalType=binary&ratio=1&rotation=0&showTitle=false&size=46770&status=done&style=shadow&taskId=ud013f125-0797-4793-820c-605c609efe0&title=&width=1653)
-### 拼接表名
-业务背景：实际开发中，有的表数据量非常庞大，可能会采用分表方式进行存储，比如每天生成一张表，表的名字与日期挂钩，例如：2022年8月1日生成的表：t_user20220108。2000年1月1日生成的表：t_user20000101。此时前端在进行查询的时候会提交一个具体的日期，比如前端提交的日期为：2000年1月1日，那么后端就会根据这个日期动态拼接表名为：t_user20000101。有了这个表名之后，将表名拼接到sql语句当中，返回查询结果。那么大家思考一下，拼接表名到sql语句当中应该使用#{} 还是 ${} 呢？
+### 拼接表名使用${}
+业务背景：实际开发中，有的表数据量非常庞大，可能会采用分表方式进行存储，比如每天生成一张表，表的名字与日期挂钩，例如：2022年8月1日生成的表：t_user20220108。2000年1月1日生成的表：t_user20000101。此时前端在进行查询的时候会提交一个具体的日期，比如前端提交的日期为：2000年1月1日，那么后端就会根据这个日期动态拼接表名为：t_user20000101。有了这个表名之后，将表名拼接到sql语句当中，返回查询结果。那么大家思考一下，拼接表名到sql语句当中应该使用#{} 还是 \${} 呢？
 使用#{}会是这样：select * from 't_car'
 使用${}会是这样：select * from t_car
+
 ```xml
 <select id="selectAllByTableName" resultType="car">
   select
@@ -4335,9 +4336,10 @@ public void testSelectAllByTableName(){
 - delete from t_user where id in(1, 2, 3);
 
 假设现在使用in的方式处理，前端传过来的字符串：1, 2, 3
-如果使用mybatis处理，应该使用#{} 还是 ${}
+如果使用mybatis处理，应该使用#{} 还是 \${}
 使用#{} ：delete from t_user where id in('1,2,3') **执行错误：1292 - Truncated incorrect DOUBLE value: '1,2,3'**
 使用${} ：delete from t_user where id in(1, 2, 3)
+
 ```java
 /**
      * 根据id批量删除
@@ -4407,7 +4409,8 @@ public void testSelectLikeByBrand(){
 ```
 执行结果：
 ![4E799667-0AED-4926-9D08-EDCE3E8C520E.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1660804562331-8febb980-24d8-4e18-8e4b-6416f28aa251.png#averageHue=%232c2c2b&clientId=u85e451ff-5650-4&from=paste&height=330&id=uf8d43918&originHeight=330&originWidth=1593&originalType=binary&ratio=1&rotation=0&showTitle=false&size=27579&status=done&style=shadow&taskId=u2a293959-d6c3-44b3-aac7-cdfb360bc5a&title=&width=1593)
-第二种：双引号方式
+**第二种：双引号方式**
+
 ```xml
 <select id="selectLikeByBrand" resultType="Car">
   select
@@ -4461,10 +4464,10 @@ resultType属性用来指定查询结果集的封装类型，这个名字太长�
 - typeAlias：
    - type属性：指定给哪个类起别名
    - alias属性：别名。
-      - alias属性不是必须的，如果缺省的话，type属性指定的类型名的简类名作为别名。
-      - alias是大小写不敏感的。也就是说假设alias="Car"，再用的时候，可以CAR，也可以car，也可以Car，都行。
+      - **alias属性不是必须的，如果缺省的话，type属性指定的类型名的简类名作为别名。**
+      - **alias是大小写不敏感的。**也就是说假设alias="Car"，再用的时候，可以CAR，也可以car，也可以Car，都行。
 ### 第二种方式：package
-如果一个包下的类太多，每个类都要起别名，会导致typeAlias标签配置较多，所以mybatis用提供package的配置方式，只需要指定包名，该包下的所有类都自动起别名，别名就是简类名。并且别名不区分大小写。
+如果一个包下的类太多，每个类都要起别名，会导致typeAlias标签配置较多，所以mybatis用提供package的配置方式，**只需要指定包名，该包下的所有类都自动起别名，别名就是简类名。并且别名不区分大小写。**
 ```xml
 <typeAliases>
   <package name="com.powernode.mybatis.pojo"/>
@@ -4516,11 +4519,11 @@ SQL映射文件的配置方式包括四种：
 </mappers>
 ```
 ### url
-这种方式显然使用了绝对路径的方式，这种配置对SQL映射文件存放的位置没有要求，随意。
+这种方式显然使用了绝对路径的方式，这种配置对SQL映射文件存放的位置没有要求，随意。（移植性太差）
 ```xml
 <mappers>
   <mapper url="file:///var/mappers/AuthorMapper.xml"/>
-  <mapper url="file:///var/mappers/BlogMapper.xml"/>
+  <mapper url="file:///d:/mappers/BlogMapper.xml"/>
   <mapper url="file:///var/mappers/PostMapper.xml"/>
 </mappers>
 ```
@@ -4532,6 +4535,8 @@ SQL映射文件的配置方式包括四种：
 ```xml
 <!-- 使用映射器接口实现类的完全限定类名 -->
 <mappers>
+  <!--如果你指定class是org.mybatis.builder.AuthorMapper-->
+  <!--那么Mybatis框架会自动去org/mybatis/builder目录下查找AuthorMapper.xml文件-->
   <mapper class="org.mybatis.builder.AuthorMapper"/>
   <mapper class="org.mybatis.builder.BlogMapper"/>
   <mapper class="org.mybatis.builder.PostMapper"/>
@@ -4539,7 +4544,7 @@ SQL映射文件的配置方式包括四种：
 ```
 将CarMapper.xml文件移动到和mapper接口同一个目录下：
 
-- 在resources目录下新建：com/powernode/mybatis/mapper【这里千万要注意：**不能这样新建 com.powernode.mybatis.dao**】
+- 在resources目录下新建：com/powernode/mybatis/mapper【这里千万要注意：**不能这样新建 com.powernode.mybatis.mapper**】(在resources目录新建一个目录，这个目录结构与CarMapper接口所在的包的目录结构相同，然后将CarMapper.xml文件移动到resources下新建的这个目录中，这样就相当于将CarMapper接口和CarMapper.xml映射文件放在了同一个目录下。)
 - 将CarMapper.xml文件移动到mapper目录下
 - 修改mybatis-config.xml文件
 ```xml
@@ -4547,9 +4552,15 @@ SQL映射文件的配置方式包括四种：
   <mapper class="com.powernode.mybatis.mapper.CarMapper"/>
 </mappers>
 ```
+![image-20241024104406461](C:\Users\PC\AppData\Roaming\Typora\typora-user-images\image-20241024104406461.png)
+
 运行程序：正常！！！
+
 ### package
 如果class较多，可以使用这种package的方式，但前提条件和上一种方式一样。
+
+**这种方式在开发中是常用的，前提：接口和配置文件在同一个目录下**
+
 ```xml
 <!-- 将包内的映射器接口实现全部注册为映射器 -->
 <mappers>
@@ -4575,6 +4586,8 @@ mybatis-config.xml和SqlMapper.xml文件可以在IDEA中提前创建好模板，
 void insertUseGeneratedKeys(Car car);
 ```
 ```xml
+<!--useGeneratedKeys="true" 表示使用自动生成的主键值-->
+<!--keyProperty="id" 指定自动生成的主键值赋值给对象的id属性-->
 <insert id="insertUseGeneratedKeys" useGeneratedKeys="true" keyProperty="id">
   insert into t_car(id,car_num,brand,guide_price,produce_time,car_type) values(null,#{carNum},#{brand},#{guidePrice},#{produceTime},#{carType})
 </insert>
@@ -4747,12 +4760,14 @@ public class StudentMapperTest {
 }
 
 ```
-通过测试得知，简单类型对于mybatis来说都是可以自动类型识别的：
+通过测试得知，**简单类型对于mybatis来说都是可以自动类型识别的：**
 
 - 也就是说对于mybatis来说，它是可以自动推断出ps.setXxxx()方法的。ps.setString()还是ps.setInt()。它可以自动推断。
 
 其实SQL映射文件中的配置比较完整的写法是：
 ```xml
+<!--mybatis内置了很多别名，可以直接在parameterType属性中使用的。(详细的可以参考开发手册)-->
+<!--例如java.lang.String的别名是string(这个别名也是不区分大小写的)-->
 <select id="selectByName" resultType="student" parameterType="java.lang.String">
   select * from t_student where name = #{name, javaType=String, jdbcType=VARCHAR}
 </select>
@@ -4761,7 +4776,7 @@ public class StudentMapperTest {
 
 - javaType：可以省略
 - jdbcType：可以省略
-- parameterType：可以省略
+- parameterType：作用是告诉mybatis框架，这个方法的参数类型是什么类型。mybatis框架自身带有类型自动推断机制，所以大部分情况下parameterType可以省略。
 
 **如果参数只有一个的话，#{} 里面的内容就随便写了。对于 ${} 来说，注意加单引号。**
 ## 10.2 Map参数
@@ -4826,13 +4841,13 @@ public void testInsert(){
 ## 10.4 多参数
 需求：通过name和sex查询
 ```java
-    /**
-     * 根据name和sex查询
-     * @param name
-     * @param sex
-     * @return
-     */
-    List<Student> selectByNameAndSex(String name, Character sex);
+/**
+ * 根据name和sex查询
+ * @param name
+ * @param sex
+ * @return
+ */
+List<Student> selectByNameAndSex(String name, Character sex);
 ```
 ```java
 @Test
@@ -4890,28 +4905,33 @@ map.put("param2", sex);
 可以不用arg0 arg1 param1 param2吗？这个map集合的key我们自定义可以吗？当然可以。使用@Param注解即可。这样可以增强可读性。
 需求：根据name和age查询
 ```java
-    /**
-     * 根据name和age查询
-     * @param name
-     * @param age
-     * @return
-     */
-    List<Student> selectByNameAndAge(@Param(value="name") String name, @Param("age") int age);
+/**
+ * 根据name和age查询
+ * @param name
+ * @param age
+ * @return
+ * 底层实现原理：
+ *   Map<String,Object> map = new HashMap<>();
+ *   map.put("name", name);
+ *   map.put("age", age);
+ */
+List<Student> selectByNameAndAge(@Param(value="name") String name, @Param("age") int age);
 ```
 ```java
-    @Test
-    public void testSelectByNameAndAge(){
-        List<Student> stus = mapper.selectByNameAndAge("张三", 20);
-        stus.forEach(student -> System.out.println(student));
-    }
+@Test
+public void testSelectByNameAndAge(){
+    List<Student> stus = mapper.selectByNameAndAge("张三", 20);
+    stus.forEach(student -> System.out.println(student));
+}
 ```
 ```xml
 <select id="selectByNameAndAge" resultType="student">
   select * from t_student where name = #{name} and age = #{age}
 </select>
 ```
-通过测试，一切正常。
+通过测试，一切正常。使用了@Param注解之后，arg0和arg1失效了，param1和param2还在。
 核心：@Param("**这里填写的其实就是map集合的key**")
+
 ## 10.6 @Param源码分析
 ![FF11FF8F-42C2-405a-AFA4-708FC564CC46.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1660643136419-5851b57a-ae96-4488-bb0c-8864c92771f3.png#clientId=u7e0d60f6-6020-4&from=paste&height=482&id=ue4cbbe91&originHeight=482&originWidth=996&originalType=binary&ratio=1&rotation=0&showTitle=false&size=70211&status=done&style=shadow&taskId=u01c71bab-74f0-4620-bf10-2779e9b2164&title=&width=996)
 ![logo.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1659578619308-ceb8077a-94a7-4f64-b41d-e54b3c14e7fb.png#clientId=u6b7aa99c-2be4-4&from=paste&id=Q9lDv&originHeight=152&originWidth=1180&originalType=binary&ratio=1&rotation=0&showTitle=false&size=17957&status=done&style=none&taskId=u6b6c011d-5b8c-4c26-8cd3-e70c19148ae&title=)
@@ -5053,8 +5073,9 @@ public void testSelectAll2(){
 ![8D921E96-56B6-48a2-A605-0F27EE2D38C6.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1660816549528-b600f5a9-81b4-4725-87c7-b933ee60ca39.png#clientId=u85e451ff-5650-4&from=paste&height=320&id=u1669660d&originHeight=320&originWidth=1357&originalType=binary&ratio=1&rotation=0&showTitle=false&size=51856&status=done&style=shadow&taskId=u2164854e-7c28-4d8b-bd6d-8495d4a6566&title=&width=1357)
 ## 11.3 返回Map
 当返回的数据，没有合适的实体类对应的话，可以采用Map集合接收。字段名做key，字段值做value。
-查询如果可以保证只有一条数据，则返回一个Map集合即可。
+**查询如果可以保证只有一条数据，则返回一个Map集合即可。**
 ![24B63480-BD38-4039-9958-A2A8BE5291F7.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1660816974662-61782965-88fb-466e-a5ff-5af02ab614df.png#clientId=u85e451ff-5650-4&from=paste&height=247&id=ua0cc183c&originHeight=247&originWidth=257&originalType=binary&ratio=1&rotation=0&showTitle=false&size=4315&status=done&style=shadow&taskId=u86d1b32b-7d18-4306-b22c-cb73b34e0fd&title=&width=257)
+
 ```java
 /**
  * 通过id查询一条记录，返回Map集合
@@ -5092,6 +5113,7 @@ public void testSelectByIdRetMap(){
 List<Map<String,Object>> selectAllRetListMap();
 ```
 ```xml
+<!--注意resultType="map"，即List<map>，相当于List<Car>-->
 <select id="selectAllRetListMap" resultType="map">
   select id,car_num carNum,brand,guide_price guidePrice,produce_time produceTime,car_type carType from t_car
 </select>
@@ -5124,7 +5146,7 @@ public void testSelectAllRetListMap(){
      * Map集合的value是对应Car。
      * @return
      */
-@MapKey("id")
+@MapKey("id") // 指定Car的id作为大Map的key
 Map<Long,Map<String,Object>> selectAllRetMap();
 ```
 ```xml
@@ -5171,6 +5193,7 @@ List<Car> selectAllByResultMap();
             type：结果集要映射的类。可以使用别名。
 -->
 <resultMap id="carResultMap" type="car">
+  <!--如果数据库表有主键，建议配置一个id标签 （这不是必须的 ）-->
   <!--对象的唯一标识，官方解释是：为了提高mybatis的性能。建议写上。-->
   <id property="id" column="id"/>
   <result property="carNum" column="car_num"/>
@@ -5208,7 +5231,7 @@ SQL命名规范：全部小写，单词之间采用下划线分割。
 | carType | car_type |
 | produceTime | produce_time |
 
-如何启用该功能，在mybatis-config.xml文件中进行配置：
+如何启用该功能，在mybatis-config.xml文件中进行配置：(在settings标签猴子那个配置)
 ```xml
 <!--放在properties标签后面-->
 <settings>

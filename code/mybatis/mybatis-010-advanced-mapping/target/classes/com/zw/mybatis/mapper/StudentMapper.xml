@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zw.mybatis.mapper.StudentMapper">
+
+    <resultMap id="studentResultMap" type="Student">
+        <id property="sid" column="sid"/>
+        <result property="sname" column="sname"/>
+        <result property="clazz.cid" column="cid"/>
+        <result property="clazz.cname" column="cname"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="studentResultMap">
+        select
+            s.sid, s.sname, s.cid, c.cname
+        from
+            t_stu s
+        left join
+            t_clazz c
+        on
+            s.cid = c.cid
+        where
+            s.sid = #{sid}
+    </select>
+    
+    
+    <resultMap id="studentResultMapAssociation" type="student">
+        <id property="sid" column="sid"/>
+        <result property="sname" column="sname"/>
+        <!--
+            association译为关联。一个student对象关联一个clazz对象
+                property：提供要映射的类的属性名，
+        -->
+        <association property="clazz" javaType="clazz">
+            <id property="cid" column="cid"/>
+            <result property="cname" column="cname"/>
+        </association>
+    </resultMap>
+    <select id="selectByIdAssociation" resultMap="studentResultMapAssociation">
+        select
+            s.sid, s.sname, s.cid, c.cname
+        from
+            t_stu s
+        left join
+            t_clazz c
+        on
+            s.cid = c.cid
+        where
+            s.sid = #{sid}
+    </select>
+
+    <resultMap id="studentResultMapStep1" type="student">
+        <id property="sid" column="sid"/>
+        <result property="sname" column="sname"/>
+        <!--
+            1. 分布查询中，association标签的select属性中要指定另一条sql语句的id
+            2. association标签的column属性用来指定传给另一条sql语句的参数
+        -->
+        <association property="clazz"
+                     select="com.zw.mybatis.mapper.ClazzMapper.selectByIdStep2"
+                     column="cid" />
+    </resultMap>
+    <select id="selectByIdStep1" resultMap="studentResultMapStep1">
+        select sid,sname,cid from t_stu where sid = #{sid}
+    </select>
+
+
+    <select id="selectByCid" resultType="student">
+        select * from t_stu where cid = #{cid}
+    </select>
+</mapper>

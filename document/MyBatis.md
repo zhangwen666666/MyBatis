@@ -5344,6 +5344,15 @@ public interface CarMapper {
 
     <select id="selectByMultiCondition" resultType="car">
         select * from t_car where
+        <!--
+            1. if标签中test属性是必须的
+            2. if标签中test属性的值是false或者true
+            3. 如果test是true，则if标签中的sql语句就会拼接。反之则不会拼接
+            4. test属性中可以使用的是：
+                当使用了@Param注解，那么test中要出现的是@Param注解指定的参数名。
+                当没有使用@Param注解，那么test中要出现的是： param1 param2 param3 arg0 arg1 arg2
+                当使用了pojo，那么test中出现的是POJO类的属性名
+        -->  
         <if test="brand != null and brand != ''">
             brand like #{brand}"%"
         </if>
@@ -5498,13 +5507,14 @@ List<Car> cars = mapper.selectByMultiConditionWithWhere("丰田", 20.0, "");
 ```
 运行结果：
 ![B3C02137-829D-49ad-B8C7-6816D0D7EC48.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1660891786608-272a3ab9-96f8-42bc-b5df-4d275cfe9cfe.png#clientId=uce76794a-2043-4&from=paste&height=222&id=u22f88380&originHeight=222&originWidth=946&originalType=binary&ratio=1&rotation=0&showTitle=false&size=22878&status=done&style=shadow&taskId=u861a1cb3-51c4-4397-b857-7ace5c56582&title=&width=946)
-很显然，后面多余的and是不会被去除的。
+很显然，**后面多余的and是不会被去除的。**
+
 ## 12.3 trim标签
 trim标签的属性：
 
-- prefix：在trim标签中的语句前**添加**内容
+- prefix：在trim标签中的语句前(trim标签外)**添加**内容
 - suffix：在trim标签中的语句后**添加**内容
-- prefixOverrides：前缀**覆盖掉（去掉）**
+- prefixOverrides：前缀**覆盖掉（去掉）**(trim标签内的内容)
 - suffixOverrides：后缀**覆盖掉（去掉）**
 ```java
 /**
@@ -5676,9 +5686,9 @@ int deleteBatchByForeach(@Param("ids") Long[] ids);
 <!--
 collection：集合或数组
 item：集合或数组中的元素
-separator：分隔符
-open：foreach标签中所有内容的开始
-close：foreach标签中所有内容的结束
+separator：分隔符（分隔符的两端自动添加空格）
+open：foreach标签中所有内容的最前面以什么开始
+close：foreach标签中所有内容的最后面以什么结束
 -->
 <delete id="deleteBatchByForeach">
   delete from t_car where id in
@@ -5711,6 +5721,7 @@ int deleteBatchByForeach2(@Param("ids") Long[] ids);
 ```xml
 <delete id="deleteBatchByForeach2">
   delete from t_car where
+  <!--分隔符的两端自动添加空格-->
   <foreach collection="ids" item="id" separator="or">
     id = #{id}
   </foreach>
@@ -5759,6 +5770,7 @@ public void testInsertBatchByForeach(){
 ```
 执行结果：
 ![A1B37462-5261-4b46-97CA-9D703D1452AC.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1660900226070-90533bde-4129-49b5-9fa7-639aa07c3b03.png#clientId=uc60038c0-79d0-4&from=paste&height=166&id=u5ac82100&originHeight=166&originWidth=926&originalType=binary&ratio=1&rotation=0&showTitle=false&size=16492&status=done&style=shadow&taskId=udef78a82-7c78-4c59-87d1-62e98fb5a68&title=&width=926)
+
 ## 12.7 sql标签与include标签
 sql标签用来声明sql片段
 include标签用来将声明的sql片段包含到某个sql语句当中
@@ -5823,7 +5835,10 @@ public class Clazz {
 ```
 创建mapper接口：StudentMapper、ClazzMapper
 创建mapper映射文件：StudentMapper.xml、ClazzMapper.xml
+
 ## 13.1 多对一
+<img src="C:\Users\PC\AppData\Roaming\Typora\typora-user-images\image-20241025111929381.png" alt="image-20241025111929381"  />
+
 多种方式，常见的包括三种：
 
 - 第一种方式：一条SQL语句，级联属性映射。
@@ -5935,6 +5950,10 @@ public class StudentMapperTest {
 <resultMap id="studentResultMap" type="Student">
   <id property="sid" column="sid"/>
   <result property="sname" column="sname"/>
+  <!--
+	association译为关联。一个student对象关联一个clazz对象
+    	property：提供要映射的类的属性名，
+  -->
   <association property="clazz" javaType="Clazz">
     <id property="cid" column="cid"/>
     <result property="cname" column="cname"/>
@@ -5946,10 +5965,15 @@ association翻译为：关联。
 ### 第三种方式：分步查询
 其他位置不需要修改，只需要修改以及添加以下三处：
 第一处：association中select位置填写sqlId。sqlId=namespace+id。其中column属性作为这条子sql语句的条件。
+
 ```xml
 <resultMap id="studentResultMap" type="Student">
   <id property="sid" column="sid"/>
   <result property="sname" column="sname"/>
+  <!--
+    1. 分布查询中，association标签的select属性中要指定另一条sql语句的id
+    2. association标签的column属性用来指定传给另一条sql语句的参数
+  -->
   <association property="clazz"
                select="com.powernode.mybatis.mapper.ClazzMapper.selectByCid"
                column="cid"/>
@@ -6002,8 +6026,9 @@ public interface ClazzMapper {
 - 第一个优点：代码复用性增强。
 - 第二个优点：支持延迟加载。【暂时访问不到的数据可以先不查询。提高程序的执行效率。】
 ## 13.2 多对一延迟加载
-要想支持延迟加载，非常简单，只需要在association标签中添加fetchType="lazy"即可。
+要想支持延迟加载，非常简单，只需要在association标签中添加fetchType="lazy"即可。(局部的延迟加载，只对这一条sql语句生效)
 修改StudentMapper.xml文件：
+
 ```xml
 <resultMap id="studentResultMap" type="Student">
   <id property="sid" column="sid"/>
@@ -6048,8 +6073,9 @@ public class StudentMapperTest {
 ```
 ![D804FEF1-B414-4d5d-AF22-CF2042FACA69.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1661151926961-a0affa2d-2d89-4b67-8cc0-bf8604ded4fc.png#clientId=ubeb36f5f-42dd-4&from=paste&height=241&id=ub355c610&originHeight=241&originWidth=778&originalType=binary&ratio=1&rotation=0&showTitle=false&size=23158&status=done&style=shadow&taskId=u94275f08-384f-4027-90c2-1bb19f838f0&title=&width=778)
 通过以上的执行结果可以看到，只有当使用到班级名称之后，才会执行关联的sql语句，这就是延迟加载。
-在mybatis中如何开启全局的延迟加载呢？需要setting配置，如下：
+**在mybatis中如何开启全局的延迟加载呢？需要setting配置，如下：**
 ![0253ED55-CB5E-4256-BEE2-2C9E97317809.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1661136161612-a7c3cc7f-fe89-4245-a297-1572d8384566.png#clientId=ubeb36f5f-42dd-4&from=paste&height=314&id=ued68a328&originHeight=314&originWidth=1505&originalType=binary&ratio=1&rotation=0&showTitle=false&size=29174&status=done&style=shadow&taskId=u8519649e-773a-49bd-8c51-2ccdd385a85&title=&width=1505)
+
 ```xml
 <settings>
   <setting name="lazyLoadingEnabled" value="true"/>
@@ -6075,7 +6101,8 @@ public class StudentMapperTest {
 ```
 ![D804FEF1-B414-4d5d-AF22-CF2042FACA69.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1661151954051-4b5b94f7-a69d-4d21-b220-1a840862fb85.png#clientId=ubeb36f5f-42dd-4&from=paste&height=241&id=uae4f54af&originHeight=241&originWidth=778&originalType=binary&ratio=1&rotation=0&showTitle=false&size=23158&status=done&style=shadow&taskId=uad4731e1-dec8-4420-b536-732a8bcd09e&title=&width=778)
 通过以上的测试可以看出，我们已经开启了全局延迟加载策略。
-开启全局延迟加载之后，所有的sql都会支持延迟加载，如果某个sql你不希望它支持延迟加载怎么办呢？将fetchType设置为eager：
+**开启全局延迟加载之后，所有的sql都会支持延迟加载，如果某个sql你不希望它支持延迟加载怎么办呢？将fetchType设置为eager：**
+
 ```xml
 <resultMap id="studentResultMap" type="Student">
   <id property="sid" column="sid"/>
@@ -6090,8 +6117,11 @@ public class StudentMapperTest {
 这样的话，针对某个特定的sql，你就关闭了延迟加载机制。
 后期我们要不要开启延迟加载机制，主要看实际的业务需求是怎样的。
 ## 13.3 一对多
+![image-20241025173431285](C:\Users\PC\AppData\Roaming\Typora\typora-user-images\image-20241025173431285.png)
+
 一对多的实现，通常是在一的一方中有List集合属性。
 在Clazz类中添加List<Student> stus; 属性。
+
 ```java
 public class Clazz {
     private Integer cid;
@@ -6140,6 +6170,7 @@ public interface ClazzMapper {
 <resultMap id="clazzResultMap" type="Clazz">
   <id property="cid" column="cid"/>
   <result property="cname" column="cname"/>
+  <!--property标签中写的是clazz对象的属性名，ofType中写的是集合中的对象的类型-->
   <collection property="stus" ofType="Student">
     <id property="sid" column="sid"/>
     <result property="sname" column="sname"/>
@@ -6221,10 +6252,14 @@ mybatis缓存包括：
 - 或者集成其它第三方的缓存：比如EhCache【Java语言开发的】、Memcache【C语言开发的】等。
 
 **缓存只针对于DQL语句，也就是说缓存机制只对应select语句。**
+
+![image-20241025174953019](C:\Users\PC\AppData\Roaming\Typora\typora-user-images\image-20241025174953019.png)
+
 ## 14.1 一级缓存
 一级缓存默认是开启的。不需要做任何配置。
 原理：只要使用同一个SqlSession对象执行同一条SQL语句，就会走缓存。
 模块名：mybatis-010-cache
+
 ```java
 package com.powernode.mybatis.mapper;
 

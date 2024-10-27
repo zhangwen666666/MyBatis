@@ -5775,6 +5775,7 @@ public void testInsertBatchByForeach(){
 sql标签用来声明sql片段
 include标签用来将声明的sql片段包含到某个sql语句当中
 作用：代码复用。易维护。
+
 ```xml
 <sql id="carCols">id,car_num carNum,brand,guide_price guidePrice,produce_time produceTime,car_type carType</sql>
 
@@ -6307,6 +6308,7 @@ public class CarMapperTest {
     @Test
     public void testSelectById() throws Exception{
         // 注意：不能使用我们封装的SqlSessionUtil工具类。
+        // 使用SqlSessionUtil工具类，在同一个线程中获取到的是同一个SqlSession对象
         SqlSessionFactoryBuilder builder = new SqlSessionFactoryBuilder();
         SqlSessionFactory sqlSessionFactory = builder.build(Resources.getResourceAsStream("mybatis-config.xml"));
 
@@ -6365,11 +6367,11 @@ void insertAccount();
 ![CBCDA9A8-3949-4bd0-8D10-56888A4286C3.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1661155640234-bdba6b74-80cf-4604-8185-fd504994150d.png#clientId=ubeb36f5f-42dd-4&from=paste&height=356&id=u7ceb82d2&originHeight=356&originWidth=1047&originalType=binary&ratio=1&rotation=0&showTitle=false&size=54381&status=done&style=none&taskId=ubf72548b-7e6e-4e18-8c2a-b7dd2c30589&title=&width=1047)
 ## 14.2 二级缓存
 二级缓存的范围是SqlSessionFactory。
-使用二级缓存需要具备以下几个条件：
+**使用二级缓存需要具备以下几个条件：**
 
-1. <setting name="cacheEnabled" value="true"> 全局性地开启或关闭所有映射器配置文件中已配置的任何缓存。默认就是true，无需设置。
+1. <setting name="cacheEnabled" value="true"> 全局性地开启或关闭所有映射器配置文件中已配置的任何缓存。默认就是true，无需设置。(二级缓存默认就是开启的)
 2. 在需要使用二级缓存的SqlMapper.xml文件中添加配置：<cache />
-3. 使用二级缓存的实体类对象必须是可序列化的，也就是必须实现java.io.Serializable接口
+3. 使用二级缓存的实体类对象必须是可序列化的，也就是**必须实现java.io.Serializable接口**
 4. SqlSession对象关闭或提交之后，一级缓存中的数据才会被写入到二级缓存当中。此时二级缓存才可用。
 
 测试二级缓存：
@@ -6392,6 +6394,8 @@ public void testSelectById2() throws Exception{
     System.out.println(car1);
 
     // 关键一步
+    // sqlSession1关闭了之后，才会将数据存储在二级缓存中，
+    // 如果这里没有关闭的话，下面SqlSession2查询的时候，二级缓存中就没有数据，并且SqlSession2的一级缓存中也没有数据，就会再次执行select语句。
     sqlSession1.close();
 
     SqlSession sqlSession2 = sqlSessionFactory.openSession();
@@ -6418,7 +6422,7 @@ public void testSelectById2() throws Exception{
 4. size：
    1. 设置二级缓存中最多可存储的java对象数量。默认值1024。
 ## 14.3 MyBatis集成EhCache
-集成EhCache是为了代替mybatis自带的二级缓存。一级缓存是无法替代的。
+集成EhCache是为了代替mybatis自带的二级缓存。**一级缓存是无法替代的。**
 mybatis对外提供了接口，也可以集成第三方的缓存组件。比如EhCache、Memcache等。都可以。
 EhCache是Java写的。Memcache是C语言写的。所以mybatis集成EhCache较为常见，按照以下步骤操作，就可以完成集成：
 第一步：引入mybatis整合ehcache的依赖。
@@ -6527,6 +6531,7 @@ public void testSelectById2() throws Exception{
 ### 第三步：配置generatorConfig.xml
 该文件名必须叫做：generatorConfig.xml
 该文件必须放在类的根路径下。
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE generatorConfiguration
@@ -6538,6 +6543,7 @@ public void testSelectById2() throws Exception{
         targetRuntime有两个值：
             MyBatis3Simple：生成的是基础版，只有基本的增删改查。
             MyBatis3：生成的是增强版，除了基本的增删改查之外还有复杂的增删改查。
+		增强版生成两个类，其中XxxExample类是用来封装查询条件的
     -->
     <context id="DB2Tables" targetRuntime="MyBatis3">
         <!--防止生成重复代码-->
@@ -6649,21 +6655,25 @@ public class GeneratorTest {
         Car car = mapper.selectByPrimaryKey(89L);
         System.out.println(car);
         // 查所有
+        // selectByExample,根据条件查询，如果条件是null表示没有条件
         List<Car> cars = mapper.selectByExample(null);
         cars.forEach(c -> System.out.println(c));
         // 多条件查询
         // QBC 风格：Query By Criteria 一种查询方式，比较面向对象，看不到sql语句。
+        // 按照条件查询
+        // 1. 封装条件，通过CarExample对象来封装查询条件
         CarExample carExample = new CarExample();
-        carExample.createCriteria()
-                .andBrandEqualTo("丰田霸道")
-                .andGuidePriceGreaterThan(new BigDecimal(60.0));
-        carExample.or().andProduceTimeBetween("2000-10-11", "2022-10-11");
-
-        mapper.selectByExample(carExample);
+        // 2. 调用carExample.createCriteria()来创建查询条件 注意这里模糊查询要手动添加%
+        carExample.createCriteria().andBrandLike("%丰田%").andGuidePriceGreaterThan(new BigDecimal(20));
+        // 继续添加or条件
+        carExample.or().andCarTypeEqualTo("电车");
+        // 执行查询
+        // 生成的sql语句：select id, car_num, brand, guide_price, produce_time, car_type from t_car WHERE ( brand like ? and guide_price > ? ) or( car_type = ? )
+        List<Car> carList = mapper.selectByExample(carExample);
+        carList.forEach(System.out::println);
         sqlSession.commit();
     }
 }
-
 ```
 ![logo.png](https://cdn.nlark.com/yuque/0/2022/png/21376908/1659578619308-ceb8077a-94a7-4f64-b41d-e54b3c14e7fb.png#clientId=u6b7aa99c-2be4-4&from=paste&id=IUD4s&originHeight=152&originWidth=1180&originalType=binary&ratio=1&rotation=0&showTitle=false&size=17957&status=done&style=none&taskId=u6b6c011d-5b8c-4c26-8cd3-e70c19148ae&title=)
 # 十六、MyBatis使用PageHelper
@@ -6673,7 +6683,7 @@ mysql的limit后面两个数字：
 - 第一个数字：startIndex（起始下标。下标从0开始。）
 - 第二个数字：pageSize（每页显示的记录条数）
 
-假设已知页码pageNum，还有每页显示的记录条数pageSize，第一个数字可以动态的获取吗？
+假设已知**页码pageNum，还有每页显示的记录条数pageSize**，第一个数字可以动态的获取吗？
 
 - startIndex = (pageNum - 1) * pageSize
 
@@ -6797,13 +6807,17 @@ public void testPageHelper() throws Exception{
     CarMapper mapper = sqlSession.getMapper(CarMapper.class);
 
     // 开启分页
-    PageHelper.startPage(2, 2);
+    int pageNum = 2;
+    int pageSize = 2;
+    PageHelper.startPage(pageNum, pageSize);
 
     // 执行查询语句
     List<Car> cars = mapper.selectAll();
 
     // 获取分页信息对象
+    // 5表示导航显示的页数(navigatePages)
     PageInfo<Car> pageInfo = new PageInfo<>(cars, 5);
+    // 这里可以调用pageInfo对象的相关方法获取相关的属性
 
     System.out.println(pageInfo);
 }
@@ -6910,7 +6924,7 @@ public void testUpdate() throws Exception{
     sqlSession.close();
 }
 ```
-## 17.4 @Select
+## 17.4 @Select  @Result
 ```java
 @Select("select * from t_car where id = #{id}")
 @Results({

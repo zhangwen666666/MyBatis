@@ -14,7 +14,7 @@
 
 * MVC就是一个司令官，调度两个秘书。去做这件事情。
 
-  ![image-20241017113400691](C:\Users\PC\AppData\Roaming\Typora\typora-user-images\image-20241017113400691.png)
+  ![image-20250905152338547](F:\JavaCode\MyBatis\document\image\image-20250905152338547.png)
 
 
 
@@ -22,4 +22,4 @@
 
 * 三层架构图示
 
-  ![image-20241017162541456](C:\Users\PC\AppData\Roaming\Typora\typora-user-images\image-20241017162541456.png)
+  ![image-20250905152347967](F:\JavaCode\MyBatis\document\image\image-20250905152347967.png)
